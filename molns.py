@@ -22,7 +22,7 @@ class MOLNSException(Exception):
 class MOLNSConfig(Datastore):
     def __init__(self, config_dir=None, db_file=None):
         Datastore.__init__(self,config_dir=config_dir, db_file=db_file)
-    
+
     def __str__(self):
         return "MOLNSConfig(config_dir={0})".format(self.config_dir)
 
@@ -144,12 +144,12 @@ class MOLNSController(MOLNSbase):
     def controller_get_config(cls, name=None, provider_type=None, config=None):
         """ Return a list of dict of config var for the controller config.
             Each dict in the list has the keys: 'key', 'value', 'type'
-            
+
             Either 'name' or 'provider_type' must be specified.
             If 'name' is specified, then it will retreive the value from that
             config and return it in 'value' (or return the string '********'
             if that config is obfuscated, such passwords).
-            
+
         """
         if config is None:
             raise MOLNSException("no config specified")
@@ -249,7 +249,7 @@ class MOLNSController(MOLNSbase):
                     provider_name = 'ERROR: {0}'.format(e)
                 table_data.append([c.name, provider_name])
             return {'type':'table','column_names':['name', 'provider'], 'data':table_data}
-    
+
     @classmethod
     def show_controller(cls, args, config):
         """ Show all the details of a controller config. """
@@ -345,7 +345,7 @@ class MOLNSController(MOLNSbase):
         print " ".join(cmd)
         subprocess.call(cmd)
         print "SSH process completed"
-        
+
 
     @classmethod
     def status_controller(cls, args, config):
@@ -462,9 +462,18 @@ class MOLNSController(MOLNSbase):
                     if status == worker_obj.STATUS_RUNNING or status == worker_obj.STATUS_STOPPED:
                         print "Terminating worker '{1}' running at {0}".format(i.ip_address, worker_name)
                         worker_obj.terminate_instance(i)
-    
+
         else:
             print "No instance running for this controller"
+
+
+    @classmethod
+    def restart_controller(cls, args, config):
+        """ Restart the Molns controller. """
+        logging.debug("MOLNSController.restart_controller(args={0})".format(args))
+        cls.stop_controller(args, config)
+        cls.start_controller(args, config, None)
+
 
 
     @classmethod
@@ -475,7 +484,7 @@ class MOLNSController(MOLNSbase):
         if controller_obj is None: return
         instance_list = config.get_all_instances(controller_id=controller_obj.id)
         logging.debug("\tinstance_list={0}".format([str(i) for i in instance_list]))
-        # Check if they are running or stopped 
+        # Check if they are running or stopped
         if len(instance_list) > 0:
             for i in instance_list:
                 if i.worker_group_id is None:
@@ -600,12 +609,12 @@ class MOLNSWorkerGroup(MOLNSbase):
     def worker_group_get_config(cls, name=None, provider_type=None, config=None):
         """ Return a list of dict of config var for the worker group config.
             Each dict in the list has the keys: 'key', 'value', 'type'
-            
+
             Either 'name' or 'provider_type' must be specified.
             If 'name' is specified, then it will retreive the value from that
             config and return it in 'value' (or return the string '********'
             if that config is obfuscated, such passwords).
-            
+
         """
         if config is None:
             raise MOLNSException("no config specified")
@@ -652,7 +661,7 @@ class MOLNSWorkerGroup(MOLNSbase):
                 'type':'string'
             })
         return ret
-    
+
     @classmethod
     def setup_worker_groups(cls, args, config):
         """ Configure a worker group. """
@@ -746,7 +755,7 @@ class MOLNSWorkerGroup(MOLNSbase):
             if worker_obj is None: return
             # Check if any instances are assigned to this worker
             instance_list = config.get_all_instances(worker_group_id=worker_obj.id)
-            # Check if they are running or stopped 
+            # Check if they are running or stopped
             if len(instance_list) > 0:
                 table_data = []
                 for i in instance_list:
@@ -780,7 +789,7 @@ class MOLNSWorkerGroup(MOLNSbase):
         except ProviderException as e:
             print "Could not start workers: {0}".format(e)
 
-    
+
     @classmethod
     def add_worker_groups(cls, args, config):
         """ Add workers of a MOLNs cluster. """
@@ -822,7 +831,7 @@ class MOLNSWorkerGroup(MOLNSbase):
             print "No controller running for this worker group."
             return
         return controller_ip
-        
+
 
     @classmethod
     def __launch_worker__start_or_resume_vms(cls, worker_obj, config, num_vms_to_start=0):
@@ -993,12 +1002,12 @@ class MOLNSProvider(MOLNSbase):
     def provider_get_config(cls, name=None, provider_type=None, config=None):
         """ Return a list of dict of config var for the provider config.
             Each dict in the list has the keys: 'key', 'value', 'type'
-            
+
             Either 'name' or 'provider_type' must be specified.
             If 'name' is specified, then it will retreive the value from that
             config and return it in 'value' (or return the string '********'
             if that config is obfuscated, such passwords).
-            
+
         """
         if config is None:
             raise MOLNSException("no config specified")
@@ -1115,7 +1124,7 @@ class MOLNSProvider(MOLNSbase):
             provider_obj.create_seurity_group()
         else:
             print "security group={0} is valid.".format(provider_obj['group_name'])
-        
+
         # check for MOLNS image
         if provider_obj['molns_image_name'] is None or provider_obj['molns_image_name'] == '':
             if provider_obj['ubuntu_image_name'] is None or provider_obj['ubuntu_image_name'] == '':
@@ -1129,8 +1138,8 @@ class MOLNSProvider(MOLNSbase):
 
         print "Success."
         config.save_object(provider_obj, kind='Provider')
-    
-    
+
+
     @classmethod
     def provider_rebuild(cls, args, config):
         """ Rebuild the MOLNS image."""
@@ -1370,7 +1379,7 @@ class Command():
                 ret += "[{0}={1}] ".format(k,v)
         ret += "\n\t"+self.description
         return ret
-        
+
     def __eq__(self, other):
         return self.command == other
 
@@ -1395,6 +1404,8 @@ COMMAND_LIST = [
             function=MOLNSController.put_controller),
         Command('upload', {'name':None, 'file':None},
             function=MOLNSController.upload_controller),
+        Command('restart', {'name':None},
+            function=MOLNSController.restart_controller),
         #Command('local-connect', {'name':None},
         #    function=MOLNSController.connect_controller_to_local),
         # Commands to interact with controller
@@ -1463,7 +1474,7 @@ COMMAND_LIST = [
             Command('clear', {},
                 function=MOLNSInstances.clear_instances),
         ]),
-                
+
                 ]
 
 def printHelp():
@@ -1478,7 +1489,7 @@ def parseArgs():
     if len(sys.argv) < 2 or sys.argv[1] == '-h':
         printHelp()
         return
-    
+
     arg_list = sys.argv[1:]
     config_dir = './.molns/'
     while len(arg_list) > 0 and arg_list[0].startswith('--'):
@@ -1488,11 +1499,11 @@ def parseArgs():
             print "Turning on Debugging output"
             logger.setLevel(logging.DEBUG)  #for Debugging
         arg_list = arg_list[1:]
-    
+
     if len(arg_list) == 0 or arg_list[0] =='help' or arg_list[0] == '-h':
         printHelp()
         return
-        
+
     if arg_list[0] in COMMAND_LIST:
         for cmd in COMMAND_LIST:
             if cmd == arg_list[0]:
